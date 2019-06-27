@@ -8,8 +8,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import javax.servlet.http.HttpServletRequest;
 import javax.transaction.Transactional;
 
+import com.bacefook.controller.SessionManager;
+import com.bacefook.dto.PostContentDTO;
+import com.bacefook.exception.UnauthorizedException;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -18,9 +22,9 @@ import org.springframework.web.multipart.MultipartFile;
 import com.bacefook.dto.PhotoDTO;
 import com.bacefook.exception.ElementNotFoundException;
 import com.bacefook.exception.UnprocessableFileException;
-import com.bacefook.model.Photo;
-import com.bacefook.model.Post;
-import com.bacefook.model.UserInfo;
+import com.bacefook.entity.Photo;
+import com.bacefook.entity.Post;
+import com.bacefook.entity.UserInfo;
 import com.bacefook.repository.PhotosRepository;
 import com.bacefook.repository.UsersInfoRepository;
 import com.cloudinary.Cloudinary;
@@ -44,8 +48,8 @@ public class PhotoService {
 			"cloudinary://763529519438114:rCTrP8RNpMEiCVzYZNnZlVx5sxw@bacefook");
 
 	@Transactional
-	public PhotoDTO save(MultipartFile input, Integer userId)
-			throws UnprocessableFileException, ElementNotFoundException {
+	public PhotoDTO save(MultipartFile input, HttpServletRequest request)
+			throws UnprocessableFileException, ElementNotFoundException, UnauthorizedException {
 		try {
 			File file = Files.createTempFile("", input.getOriginalFilename()).toFile();
 			input.transferTo(file);
@@ -53,9 +57,12 @@ public class PhotoService {
 			Map response = cloudinary.uploader().upload(file, ObjectUtils.asMap("public_id", file.getName()));
 			String url = (String) response.get("url");
 
-			int postId = postsService.save(userId, url);
+			Integer userId = SessionManager.getLoggedUser(request);
+			PostContentDTO content = new PostContentDTO();
+			content.setContent(url);
+			int postId = postsService.save(request, content);//TODO check
 			Post post = postsService.findById(postId);
-			Photo photo = photosRepo.save(new Photo(post.getId(), url));
+			Photo photo = photosRepo.save(new Photo(post, url));
 
 			return new PhotoDTO(photo.getId(), photo.getUrl(), post.getId());
 		} catch (IOException e) {
@@ -68,7 +75,7 @@ public class PhotoService {
 			throw new ElementNotFoundException("Could not update photo, photo not found!");
 		}
 		UserInfo info = userService.findUserInfo(userId);
-		info.setProfilePhotoId(photoId);
+		info.setProfilePhoto(photosRepo.getOne(photoId));
 		usersInfoRepo.save(info);
 	}
 
@@ -78,13 +85,13 @@ public class PhotoService {
 		}
 
 		UserInfo info = userService.findUserInfo(userId);
-		info.setCoverPhotoId(photoId);
+		info.setCoverPhoto(photosRepo.getOne(photoId));
 		usersInfoRepo.save(info);
 	}
 
 	public List<PhotoDTO> getAllPhotosOfUser(Integer userId) {
 		List<Integer> photoIds = photosRepo.findAllPhotosOfUser(userId);
-		List<PhotoDTO> photos = new LinkedList<PhotoDTO>();
+		List<PhotoDTO> photos = new LinkedList<>();
 		for (Integer integer : photoIds) {
 			Optional<Photo> optionalPhoto = photosRepo.findById(integer);
 			if (optionalPhoto.isPresent()) {

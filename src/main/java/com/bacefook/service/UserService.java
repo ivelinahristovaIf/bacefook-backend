@@ -7,23 +7,28 @@ import java.util.NoSuchElementException;
 import java.util.Optional;
 
 
+import com.bacefook.controller.SessionManager;
+import com.bacefook.dto.*;
+import com.bacefook.entity.Gender;
+import com.bacefook.exception.AlreadyContainsException;
+import com.bacefook.exception.UnauthorizedException;
+import com.bacefook.utility.UserValidation;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.bacefook.dao.ProfilePhotoDAO;
 import com.bacefook.dao.UserDAO;
-import com.bacefook.dto.SignUpDTO;
-import com.bacefook.dto.UserInfoDTO;
-import com.bacefook.dto.UserSummaryDTO;
 import com.bacefook.exception.ElementNotFoundException;
 import com.bacefook.exception.InvalidUserCredentialsException;
-import com.bacefook.model.User;
-import com.bacefook.model.UserInfo;
+import com.bacefook.entity.User;
+import com.bacefook.entity.UserInfo;
 import com.bacefook.repository.GenderRepository;
 import com.bacefook.repository.UsersInfoRepository;
 import com.bacefook.repository.UsersRepository;
 import com.bacefook.security.Cryptography;
+
+import javax.servlet.http.HttpServletRequest;
 
 @Service
 public class UserService {
@@ -54,41 +59,28 @@ public class UserService {
 		return url.get(0);
 	}
 
-	public User findByEmail(String email) throws ElementNotFoundException {
-		User user = usersRepo.findByEmail(email);
-		if (user == null) {
-			throw new ElementNotFoundException("A user with that email does not exist!");
-		}
-		return user;
-	}
 
-	public boolean emailIsTaken(String email) {
+
+	private boolean emailIsTaken(String email) {
 		return usersRepo.findByEmail(email) != null;
 	}
 
 	public User findById(Integer id) throws ElementNotFoundException {
 		try {
-			User user = usersRepo.findById(id).get();
-			return user;
+			return usersRepo.findById(id).get();
 		} catch (NoSuchElementException e) {
 			throw new ElementNotFoundException("A user with that ID does not exist!", e);
 		}
 	}
 
-	public UserInfo save(UserInfoDTO userInfoDto, Integer userId) {
-		UserInfo info = new UserInfo();
-		this.mapper.map(userInfoDto, info);
-		info.setId(userId);
-		usersInfoRepo.save(info);
-		return info;
-	}
 
 	/**
 	 * find search matches show them by Profile picture, Full name and Friends count
 	 **/
-	public List<UserSummaryDTO> searchByNameOrderedAndLimited(String search, Integer userId) {
+	public List<UserSummaryDTO> searchByNameOrderedAndLimited(String search, HttpServletRequest request) throws UnauthorizedException {
+		Integer userId = SessionManager.getLoggedUser(request);
 		List<Integer> ids = userDAO.getAllSearchingMatchesOrderedByIfFriend(userId, search);
-		List<UserSummaryDTO> usersDTO = new LinkedList<UserSummaryDTO>();
+		List<UserSummaryDTO> usersDTO = new LinkedList<>();
 		for (Integer integer : ids) {
 			Optional<User> user = usersRepo.findById(integer);
 			if (user.isPresent()) {
@@ -102,13 +94,15 @@ public class UserService {
 		return usersDTO;
 	}
 
-	public String changePassword(int userId, String oldPassword, String newPassword)
-			throws ElementNotFoundException, NoSuchAlgorithmException, InvalidUserCredentialsException {
+	public String changePassword(ChangePasswordDTO passDto, HttpServletRequest request)
+			throws ElementNotFoundException, NoSuchAlgorithmException, InvalidUserCredentialsException, UnauthorizedException {
+		UserValidation.validate(passDto);
+		int userId = SessionManager.getLoggedUser(request);
 		User user = findById(userId);
-		String oldPass = Cryptography.cryptSHA256(oldPassword);
+		String oldPass = Cryptography.cryptSHA256(passDto.getOldPassword());
 		// TODO implement safer equals
 		if (user.getPassword().equals(oldPass)) {
-			user.setPassword(Cryptography.cryptSHA256(newPassword));
+			user.setPassword(Cryptography.cryptSHA256(passDto.getNewPassword()));
 			usersRepo.save(user);
 			return "Password successfylly changed!";
 		} else {
@@ -116,30 +110,81 @@ public class UserService {
 		}
 	}
 
-	public User save(SignUpDTO signUp) throws NoSuchAlgorithmException, ElementNotFoundException {
+	public Integer login(LoginDTO login, HttpServletRequest request) throws InvalidUserCredentialsException, ElementNotFoundException, NoSuchAlgorithmException, UnauthorizedException {
+		if (!SessionManager.isLogged(request)) {
+			UserValidation.validate(login);
+			String email = login.getEmail();
+			User user = usersRepo.findByEmail(email);
+			if (user == null) {
+				throw new ElementNotFoundException("A user with that email does not exist!");
+			}
+			if (user.getPassword().equals(Cryptography.cryptSHA256(login.getPassword()))) {
+				SessionManager.signInUser(request, user);
+				return user.getId();
+			} else {
+				throw new InvalidUserCredentialsException("Wrong login credentials!");
+			}
+		} else {
+			throw new UnauthorizedException("Log out first before you log in!");
+		}
+	}
+
+	public User register(SignUpDTO signUp, HttpServletRequest request) throws NoSuchAlgorithmException,InvalidUserCredentialsException, UnauthorizedException {
+		UserValidation.validate(signUp);
+		if (SessionManager.isLogged(request)) {
+			throw new UnauthorizedException("Please log out before you can register!");
+		}
+		if (this.emailIsTaken(signUp.getEmail())) {
+			throw new InvalidUserCredentialsException("That email is already taken!");
+		}
 		User user = new User();
 		this.mapper.map(signUp, user);
 		user.setPassword(Cryptography.cryptSHA256(signUp.getPassword()));
-		user.setGenderId(genderService.findByGenderName(signUp.getGender()).getId());
+		Gender gender = genderService.findByGenderName(signUp.getGender());
+		user.setGender(gender);
 		usersRepo.save(user);
+		SessionManager.signInUser(request, user);
 		return user;
 	}
 
-	public UserInfo save(UserInfo info) throws ElementNotFoundException {
+	public String logout(HttpServletRequest request) throws UnauthorizedException {
+		if (SessionManager.isLogged(request)) {
+			return SessionManager.logOutUser(request);
+		} else {
+			throw new UnauthorizedException("You are not logged in!");
+		}
+	}
+
+	//TODO saveInfo
+	private UserInfo register(UserInfo info) throws ElementNotFoundException {
 		Optional<User> user = usersRepo.findById(info.getId());
 		if (!user.isPresent()) {
 			throw new ElementNotFoundException("No such user! Register before you can setup your profile.");
 		}
-		if (info.getProfilePhotoId() != null
-				&& !photoService.getIfUserHasPhotoById(info.getId(), info.getProfilePhotoId())) {
+		if (info.getProfilePhoto().getId() != null
+				&& !photoService.getIfUserHasPhotoById(info.getId(), info.getProfilePhoto().getId())) {
 			throw new ElementNotFoundException("You are not the owner of this photo!");
 		}
-		if (info.getCoverPhotoId() != null
-				&& !photoService.getIfUserHasPhotoById(info.getId(), info.getCoverPhotoId())) {
+		if (info.getCoverPhoto().getId() != null
+				&& !photoService.getIfUserHasPhotoById(info.getId(), info.getCoverPhoto().getId())) {
 			throw new ElementNotFoundException("You are not the owner of this photo!");
 		}
 		return usersInfoRepo.save(info);
 	}
+
+	public UserInfo setUpProfile(UserInfoDTO userInfoDto, HttpServletRequest request) throws UnauthorizedException, AlreadyContainsException, ElementNotFoundException, InvalidUserCredentialsException {
+		int userId = SessionManager.getLoggedUser(request);
+		UserInfo userInfo = getInfoByPhone(userInfoDto.getPhone());
+		if (userInfo != null) {
+			throw new AlreadyContainsException("A user with that phone already exists");
+		}
+		UserInfo info = new UserInfo();
+		this.mapper.map(userInfoDto, info);
+		info.setId(userId);
+		this.register(info);
+		return info;
+	}
+
 
 	public UserInfoDTO getInfoByUserId(Integer userId) throws ElementNotFoundException {
 		if (userId == null) {
@@ -155,7 +200,7 @@ public class UserService {
 		return dto;
 	}
 	
-	public UserInfo findUserInfo(Integer userId) throws ElementNotFoundException {
+	protected UserInfo findUserInfo(Integer userId) throws ElementNotFoundException {
 		if (userId == null) {
 			throw new ElementNotFoundException("User id must not be null!");
 		}
@@ -167,7 +212,7 @@ public class UserService {
 		
 	}
 
-	public UserInfo getInfoByPhone(String phone) throws InvalidUserCredentialsException {
+	private UserInfo getInfoByPhone(String phone) throws InvalidUserCredentialsException {
 		if(phone==null || phone.trim().length()<MIN_PHONE_LENGTH) {
 			throw new InvalidUserCredentialsException("Invalid phone number");
 		}

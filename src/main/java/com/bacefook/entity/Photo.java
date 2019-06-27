@@ -1,10 +1,6 @@
-package com.bacefook.model;
+package com.bacefook.entity;
 
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
-import javax.persistence.Table;
+import javax.persistence.*;
 
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -22,7 +18,14 @@ public class Photo {
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Integer id;
 	@NonNull
-	private Integer postId;
+	@OneToOne
+	@MapsId
+	private Post post;
 	@NonNull
 	private String url;
+
+	@OneToOne(mappedBy = "profilePhoto")
+	private UserInfo profilePhotoOF;
+	@OneToOne(mappedBy = "coverPhoto")
+	private UserInfo coverPhotoOF;
 }

@@ -4,7 +4,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.bacefook.exception.ElementNotFoundException;
-import com.bacefook.model.Gender;
+import com.bacefook.entity.Gender;
 import com.bacefook.repository.GenderRepository;
 
 @Service
@@ -14,7 +14,7 @@ public class GenderService {
 	private GenderRepository genderRepo;
 	
 	public String findById(Integer id) throws ElementNotFoundException {
-		Gender gender = genderRepo.findById(id).get();
+		Gender gender = genderRepo.getOne(id);
 		if (gender == null) {
 			throw new ElementNotFoundException("A gender with that id does not exist!");
 		}

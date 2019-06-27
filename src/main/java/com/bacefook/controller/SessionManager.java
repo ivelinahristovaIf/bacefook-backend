@@ -4,7 +4,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 
 import com.bacefook.exception.UnauthorizedException;
-import com.bacefook.model.User;
+import com.bacefook.entity.User;
 
 public class SessionManager {
 	private static final String LOGGED_STATUS = "Logged";
@@ -30,12 +30,12 @@ public class SessionManager {
 		Integer userId = (Integer) session.getAttribute(LOGGED_STATUS);
 //		session.setAttribute(LOGGED_STATUS, null);
 		session.invalidate();
-		return "User " + userId.intValue() + " was logged out!";
+		return "User " + userId+ " was logged out!";
 	}
 
 	/**
-	 * @return Logged user's ID, or null if no user is logged in
-	 * @throws UnauthorizedException
+	 * return Logged user's ID, or null if no user is logged in
+	 * throws UnauthorizedException
 	 */
 	public static Integer getLoggedUser(HttpServletRequest request) throws UnauthorizedException {
 		HttpSession session = request.getSession();

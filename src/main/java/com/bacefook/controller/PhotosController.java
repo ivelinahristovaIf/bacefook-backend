@@ -31,10 +31,7 @@ public class PhotosController {
 	public PhotoDTO uploadPhoto(@RequestParam MultipartFile input, HttpServletRequest request,
 			HttpServletResponse response)
 			throws UnprocessableFileException, UnauthorizedException, ElementNotFoundException {
-
-		Integer userId = SessionManager.getLoggedUser(request);
-		PhotoDTO photoDto = photoService.save(input, userId);
-		return photoDto;
+		return photoService.save(input, request);
 	}
 
 	@PutMapping("/profilephotos/{photoId}")

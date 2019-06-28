@@ -24,39 +24,31 @@ import com.bacefook.service.PhotoService;
 @RestController
 public class PhotosController {
 
-	@Autowired
-	private PhotoService photoService;
+    @Autowired
+    private PhotoService photoService;
 
-	@PostMapping("photos/uploadphoto")
-	public PhotoDTO uploadPhoto(@RequestParam MultipartFile input, HttpServletRequest request,
-			HttpServletResponse response)
-			throws UnprocessableFileException, UnauthorizedException, ElementNotFoundException {
-		return photoService.save(input, request);
-	}
+    @PostMapping("photos/uploadphoto")//DONE
+    public PhotoDTO uploadPhoto(@RequestParam MultipartFile input, HttpServletRequest request,
+                                HttpServletResponse response)
+            throws UnprocessableFileException, UnauthorizedException, ElementNotFoundException {
+        return photoService.save(input, request);
+    }
 
-	@PutMapping("/profilephotos/{photoId}")
-	public String updateProfilePhoto(@PathVariable Integer photoId, HttpServletRequest request)
-			throws UnauthorizedException, ElementNotFoundException {
-		Integer userId = SessionManager.getLoggedUser(request);
-		if (!photoService.getIfUserHasPhotoById(userId, photoId)) {
-			throw new UnauthorizedException("You do not own a photo with that id!");
-		}
-		photoService.updateProfilePhoto(photoId, userId);
-		return "You changed your profile photo successfully!";
-	}
+    @PutMapping("/profilephotos/{photoId}")//DONE
+    public String updateProfilePhoto(@PathVariable Integer photoId, HttpServletRequest request)
+            throws UnauthorizedException, ElementNotFoundException {
+        photoService.updateProfilePhoto(photoId, request);
+        return "You changed your profile photo successfully!";
+    }
 
-	@PutMapping("/coverphotos/{photoId}")
-	public void updateCoverPhoto(@PathVariable Integer photoId, HttpServletRequest request)
-			throws UnauthorizedException, ElementNotFoundException {
-		Integer userId = SessionManager.getLoggedUser(request);
-		if (!photoService.getIfUserHasPhotoById(userId, photoId)) {
-			throw new UnauthorizedException("You do not own a photo with that id!");
-		}
-		photoService.updateCoverPhoto(photoId, userId);
-	}
+    @PutMapping("/coverphotos/{photoId}")//DONE
+    public void updateCoverPhoto(@PathVariable Integer photoId, HttpServletRequest request)
+            throws UnauthorizedException, ElementNotFoundException {
+        photoService.updateCoverPhoto(photoId, request);
+    }
 
-	@GetMapping("/users/{userId}/photos")
-	public List<PhotoDTO> getAllPhotosOfUser(@PathVariable Integer userId) {
-		return photoService.getAllPhotosOfUser(userId);
-	}
+    @GetMapping("/users/{userId}/photos")//DONE
+    public List<PhotoDTO> getAllPhotosOfUser(@PathVariable Integer userId) {
+        return photoService.getAllPhotosOfUser(userId);
+    }
 }

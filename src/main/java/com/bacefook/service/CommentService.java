@@ -52,10 +52,17 @@ public class CommentService {
         return 0;//TODO return
     }
 
-    public Integer update(Integer commentId, String content) throws ElementNotFoundException {
-        Comment comment = this.findById(commentId);
-        comment.setContent(content);
-        return commentsRepo.save(comment).getId();
+    public Integer update(HttpServletRequest request, Integer commentId, @RequestBody CommentContentDTO content) throws ElementNotFoundException, UnauthorizedException {
+        if (SessionManager.isLogged(request)) {
+            if (content.getContent().isEmpty()) {
+                throw new ElementNotFoundException("Cannot update comment with empty content!");
+            }
+            Comment comment = this.findById(commentId);
+            comment.setContent(content.getContent());
+            return commentsRepo.save(comment).getId();
+        } else {
+            throw new UnauthorizedException("You are not logged in! Please log in before trying to update your posts.");
+        }
     }
 
     public void deleteComment(Integer id, HttpServletRequest request) throws ElementNotFoundException, UnauthorizedException {
@@ -68,8 +75,23 @@ public class CommentService {
         //TODO response entity
     }
 
-    public List<Comment> findAllByPostId(Integer postId) {
-        return commentsRepo.findAllByPostId(postId);
+    public List<CommentDTO> findAllByPostId(Integer postId) throws ElementNotFoundException {
+        /**
+         *  checks if post exists
+         **/
+        postService.findById(postId);
+        List<Comment> comments = commentsRepo.findAllByPostId(postId);
+        List<CommentDTO> commentsOnPost = new ArrayList<>();
+
+        for (Comment comment : comments) {
+            String posterFullName = userService.findById(comment.getPosterId()).getFullName();
+            CommentDTO commentDto = new CommentDTO();
+            this.mapper.map(comment, commentDto);
+            commentDto.setPosterFullName(posterFullName);
+            commentDto.setComentedOnId(comment.getCommentedOn().getId());
+            commentsOnPost.add(commentDto);
+        }
+        return commentsOnPost;
     }
 
     private List<Comment> findAllByUserId(Integer userId) {
@@ -77,6 +99,10 @@ public class CommentService {
     }
 
     public List<CommentDTO> findAllRepliesTo(Integer commentId) throws ElementNotFoundException {
+        /**
+         * checks if comment exists
+         */
+        this.findById(commentId);
         List<Comment> commentReplies = commentsRepo.findAllByCommentedOnIdOrderByPostingTime(commentId);
         List<CommentDTO> replies = new ArrayList<>(commentReplies.size());
         for (Comment comment : commentReplies) {
@@ -111,7 +137,7 @@ public class CommentService {
         commentsRepo.save(comment);
     }
 
-    public Comment findById(Integer commentId) throws ElementNotFoundException {
+    private Comment findById(Integer commentId) throws ElementNotFoundException {
         Comment comment = commentsRepo.getOne(commentId);
         if (comment == null) {
             throw new ElementNotFoundException("No such comment!");

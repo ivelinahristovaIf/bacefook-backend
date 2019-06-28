@@ -70,7 +70,11 @@ public class PhotoService {
 		}
 	}
 
-	public void updateProfilePhoto(Integer photoId, Integer userId) throws ElementNotFoundException {
+	public void updateProfilePhoto(Integer photoId, HttpServletRequest request) throws ElementNotFoundException, UnauthorizedException {
+		Integer userId = SessionManager.getLoggedUser(request);
+		if (!this.getIfUserHasPhotoById(userId, photoId)) {
+			throw new UnauthorizedException("You do not own a photo with that id!");
+		}
 		if (!photosRepo.existsById(photoId)) {
 			throw new ElementNotFoundException("Could not update photo, photo not found!");
 		}
@@ -79,7 +83,11 @@ public class PhotoService {
 		usersInfoRepo.save(info);
 	}
 
-	public void updateCoverPhoto(Integer photoId, Integer userId) throws ElementNotFoundException {
+	public void updateCoverPhoto(Integer photoId, HttpServletRequest request) throws ElementNotFoundException, UnauthorizedException {
+		Integer userId = SessionManager.getLoggedUser(request);
+		if (!this.getIfUserHasPhotoById(userId, photoId)) {
+			throw new UnauthorizedException("You do not own a photo with that id!");
+		}
 		if (!photosRepo.existsById(photoId)) {
 			throw new ElementNotFoundException("Could not update photo, photo not found!");
 		}
@@ -108,7 +116,7 @@ public class PhotoService {
 	/**
 	 * checks if photo id is posted by user
 	 **/
-	public boolean getIfUserHasPhotoById(Integer userId, Integer photoId) {
+	 boolean getIfUserHasPhotoById(Integer userId, Integer photoId) {
 		List<Integer> photoIds = photosRepo.findAllPhotosOfUser(userId);
 		return photoIds.contains(photoId);
 	}

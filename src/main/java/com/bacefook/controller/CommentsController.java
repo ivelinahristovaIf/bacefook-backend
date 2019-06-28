@@ -25,99 +25,70 @@ import com.bacefook.service.CommentService;
 import com.bacefook.service.PostService;
 import com.bacefook.service.UserService;
 
-//@CrossOrigin(origins = "http://bacefook.herokuapp.com")
 @RestController
 public class CommentsController {
-	@Autowired
-	private CommentService commentsService;
-	@Autowired
-	private UserService userService;
-	@Autowired
-	private PostService postService;
+    @Autowired
+    private CommentService commentsService;
+    @Autowired
+    private UserService userService;
+    @Autowired
+    private PostService postService;
 
-	private ModelMapper mapper = new ModelMapper();
+    @PostMapping("/commentlikes")//DONE
+    public String addLikeToComment(@RequestParam("commentId") Integer commentId, HttpServletRequest request)
+            throws UnauthorizedException, ElementNotFoundException {
+        commentsService.addLikeToComment(commentId, request);
+        return "Comment " + commentId + " was liked";
+    }
 
-	@PostMapping("/commentlikes")//DONE
-	public String addLikeToComment(@RequestParam("commentId") Integer commentId, HttpServletRequest request)
-			throws UnauthorizedException, ElementNotFoundException, AlreadyContainsException {
-		commentsService.addLikeToComment(commentId, request);
-		return "Comment " + commentId + " was liked";
-	}
+    @DeleteMapping("/commentlikes/unlike")
+    public String unlikeAComment(@RequestParam("commentId") Integer commentId, HttpServletRequest request) throws UnauthorizedException, ElementNotFoundException {
+        int userId = SessionManager.getLoggedUser(request);
+        int rows = commentsService.unlikeAComment(commentId, userId);
+//		if(rows>0) {
+//			return "Comment was unliked!";
+//		}else {
+//			return "Could not unlike comment.";
+//		}
+        return "Comment was unliked!";
+    }
 
-	@DeleteMapping("/commentlikes/unlike")
-	public String unlikeAComment(@RequestParam("commentId")Integer commentId,HttpServletRequest request) throws UnauthorizedException, ElementNotFoundException {
-		int userId = SessionManager.getLoggedUser(request);
-		int rows = commentsService.unlikeAComment(commentId, userId);
-		if(rows>0) {
-			return "Comment was unliked!";
-		}else {
-			return "Could not unlike comment.";
-		}
-	}
+    @PostMapping("/commentreply")//DONE
+    public void addReplyToComment(@RequestParam("commentId") Integer commentId,
+                                  @RequestBody CommentContentDTO commentContentDto, HttpServletRequest request)
+            throws UnauthorizedException, ElementNotFoundException {
+        commentsService.replyTo(request, commentId, commentContentDto);
+    }
 
-	@PostMapping("/commentreply")//DONE
-	public void addReplyToComment(@RequestParam("commentId") Integer commentId,
-			@RequestBody CommentContentDTO commentContentDto, HttpServletRequest request)
-			throws UnauthorizedException, ElementNotFoundException {
-		commentsService.replyTo(request, commentId, commentContentDto);
-	}
+    @PostMapping("/comments")//DONE
+    public Integer addCommentToPost(@RequestParam("postId") Integer postId,
+                                    @RequestBody CommentContentDTO commentContentDto, HttpServletRequest request)
+            throws UnauthorizedException, ElementNotFoundException {
+        return commentsService.save(request, postId, commentContentDto);
+    }
 
-	@PostMapping("/comments")
-	public Integer addCommentToPost(@RequestParam("postId") Integer postId,
-			@RequestBody CommentContentDTO commentContentDto, HttpServletRequest request)
-			throws UnauthorizedException, ElementNotFoundException {
-		return commentsService.save(request, postId, commentContentDto);
-	}
+    @PutMapping("/comments")//DONE
+    public void updateComment(@RequestParam("commentId") Integer commentId, @RequestBody CommentContentDTO content,
+                              HttpServletRequest request) throws UnauthorizedException, ElementNotFoundException {
+        commentsService.update(request, commentId, content);
+    }
 
-	@PutMapping("/comments")
-	public void updateComment(@RequestParam("commentId") Integer commentId, @RequestBody CommentContentDTO content,
-			HttpServletRequest request) throws UnauthorizedException, ElementNotFoundException {
-		if (SessionManager.isLogged(request)) {
-			if (content.getContent().isEmpty()) {
-				throw new ElementNotFoundException("Cannot update comment with empty content!");
-			}
-			commentsService.update(commentId,content.getContent());
-		} else {
-			throw new UnauthorizedException("You are not logged in! Please log in before trying to update your posts.");
-		}
-	}
-	
-	@DeleteMapping("/comments/delete")
-	public String deleteComment(@RequestParam("commentId")Integer id,HttpServletRequest request) throws UnauthorizedException, ElementNotFoundException {
-		commentsService.deleteComment(id,request);
-		return "Comment was deleted";
-	}
+    @DeleteMapping("/comments/delete")//DONE
+    public String deleteComment(@RequestParam("commentId") Integer id, HttpServletRequest request) throws UnauthorizedException, ElementNotFoundException {
+        commentsService.deleteComment(id, request);
+        return "Comment was deleted";
+    }
 
-	@GetMapping("/comments")
-	public List<CommentDTO> getAllCommentsByPost(@RequestParam("postId") Integer postId)
-			throws ElementNotFoundException {
-		/**
-		 *  checks if post exists
-		 **/
-		postService.findById(postId);
-		List<Comment> comments = commentsService.findAllByPostId(postId);
-		List<CommentDTO> commentsOnPost = new ArrayList<>();
+    @GetMapping("/comments")//DONE
+    public List<CommentDTO> getAllCommentsByPost(@RequestParam("postId") Integer postId)
+            throws ElementNotFoundException {
+        return commentsService.findAllByPostId(postId);
+    }
 
-		for (Comment comment : comments) {
-			String posterFullName = userService.findById(comment.getPosterId()).getFullName();
-			CommentDTO commentDto = new CommentDTO();
-			this.mapper.map(comment, commentDto);
-			commentDto.setPosterFullName(posterFullName);
-			commentDto.setComentedOnId(comment.getCommentedOn().getId());
-			commentsOnPost.add(commentDto);
-		}
-		return commentsOnPost;
-
-	}
-
-	@GetMapping("/commentreplies")
-	public List<CommentDTO> getAllCommentReplies(@RequestParam("commentId") Integer commentId)
-			throws ElementNotFoundException {
-		/**
-		 * checks if comment exists
-		 */
-		commentsService.findById(commentId);
-		return commentsService.findAllRepliesTo(commentId);
-	}
+    @GetMapping("/commentreplies")//DONE
+    public List<CommentDTO> getAllCommentReplies(@RequestParam("commentId") Integer commentId)
+            throws ElementNotFoundException {
+        return commentsService.findAllRepliesTo(commentId);
+    }
 
 }

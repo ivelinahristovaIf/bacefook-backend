@@ -4,7 +4,6 @@ import java.time.LocalDateTime;
 import java.util.*;
 
 import com.bacefook.controller.SessionManager;
-import com.bacefook.exception.AlreadyContainsException;
 import com.bacefook.exception.UnauthorizedException;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -134,7 +133,6 @@ public class PostService {
 
 	public Post findById(Integer postId) throws ElementNotFoundException {
 			Optional<Post> post = postsRepo.findById(postId);
-
 			if(!post.isPresent()) {
 				throw new ElementNotFoundException("No such post!");
 			}

@@ -13,7 +13,6 @@ import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import com.bacefook.dao.CommentDAO;
 import com.bacefook.dto.CommentContentDTO;
 import com.bacefook.dto.CommentDTO;
 import com.bacefook.exception.ElementNotFoundException;
@@ -22,7 +21,6 @@ import com.bacefook.repository.CommentsRepository;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 
-import javax.persistence.EntityManager;
 import javax.servlet.http.HttpServletRequest;
 
 @Service
@@ -30,8 +28,6 @@ public class CommentService {
 
     @Autowired
     private CommentsRepository commentsRepo;
-    @Autowired
-    private CommentDAO commentDAO;
     @Autowired
     private UserService userService;
     @Autowired
@@ -125,12 +121,13 @@ public class CommentService {
         commentsRepo.save(reply);
     }
 
-    public void addLikeToComment(int commentId, HttpServletRequest request) throws UnauthorizedException, ElementNotFoundException {
-        //TODO check if already liked
-        //get comment
+    public void addLikeToComment(int commentId, HttpServletRequest request) throws UnauthorizedException, ElementNotFoundException, AlreadyContainsException {
         int userId = SessionManager.getLoggedUser(request);
         User user = userService.findById(userId);
         Comment comment = this.findById(commentId);
+        if (this.checkIfCommentIsLiked(comment, user)) {
+            throw new AlreadyContainsException("You have already liked this comment");
+        }
         user.getLikedComments().add(comment);
         Set<User> likers = comment.getUsers();
         likers.add(user);
@@ -146,16 +143,22 @@ public class CommentService {
     }
 
     public int unlikeAComment(Integer commentId, Integer userId) throws ElementNotFoundException {
-        //TODO remove commentDAO
         User user = userService.findById(userId);
         Comment comment = this.findById(commentId);
+        if (!this.checkIfCommentIsLiked(comment, user)) {
+            throw new ElementNotFoundException("You can't unlike comment, which you haven't liked!");
+        }
         user.getLikedComments().remove(comment);
         Set<User> likers = comment.getUsers();
         likers.remove(user);
         commentsRepo.save(comment);
 
         return 0;//TODO return if deleted
-//                commentDAO.unlikeComment(commentId, userId);
+    }
+
+    private boolean checkIfCommentIsLiked(Comment comment, User user) {
+        Set<Comment> likedComments = user.getLikedComments();
+        return likedComments.contains(comment);
     }
 
 }

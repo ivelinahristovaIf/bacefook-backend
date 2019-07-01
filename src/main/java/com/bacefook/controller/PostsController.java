@@ -47,7 +47,7 @@ public class PostsController {
 	 ***/
 	@GetMapping("/home")
 	public HomePageDTO homePage(HttpServletRequest request) throws UnauthorizedException, ElementNotFoundException {
-
+		//TODO refactor
 		Integer userId = SessionManager.getLoggedUser(request);
 		User loggedUser = userService.findById(userId);
 

@@ -36,7 +36,7 @@ public class CommentsController {
 
     @PostMapping("/commentlikes")//DONE
     public String addLikeToComment(@RequestParam("commentId") Integer commentId, HttpServletRequest request)
-            throws UnauthorizedException, ElementNotFoundException {
+            throws UnauthorizedException, ElementNotFoundException, AlreadyContainsException {
         commentsService.addLikeToComment(commentId, request);
         return "Comment " + commentId + " was liked";
     }

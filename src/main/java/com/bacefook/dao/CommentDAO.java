@@ -32,4 +32,5 @@ public class CommentDAO {
 			ps.setInt(2, commentId);
 		}, (resultSet, rowNum) -> resultSet.getInt("id"));
 	}
+
 }

@@ -24,10 +24,10 @@ import com.bacefook.exception.AlreadyContainsException;
 import com.bacefook.exception.ElementNotFoundException;
 import com.bacefook.exception.InvalidUserCredentialsException;
 import com.bacefook.exception.UnauthorizedException;
-import com.bacefook.model.User;
+import com.bacefook.entity.User;
 import com.bacefook.security.Cryptography;
 import com.bacefook.service.UserService;
-import com.bacefook.utility.UserValidation;
+import com.bacefook.utility.UserValidator;
 
 //@CrossOrigin(origins = "http://bacefook.herokuapp.com")
 @RestController
@@ -52,7 +52,7 @@ public class UserController {
 	public String changeUserPassword(@RequestBody ChangePasswordDTO passDto, HttpServletRequest request)
 			throws InvalidUserCredentialsException, NoSuchAlgorithmException, UnauthorizedException,
 			ElementNotFoundException {
-		UserValidation.validate(passDto);
+		UserValidator.validate(passDto);
 		int userId = SessionManager.getLoggedUser(request);
 		return userService.changePassword(userId, passDto.getOldPassword(), passDto.getNewPassword());
 	}
@@ -61,7 +61,7 @@ public class UserController {
 	public Integer signUp(@RequestBody SignUpDTO signUp, HttpServletRequest request, HttpServletResponse response)
 			throws InvalidUserCredentialsException, ElementNotFoundException, NoSuchAlgorithmException,
 			UnauthorizedException, IOException {
-		UserValidation.validate(signUp);
+		UserValidator.validate(signUp);
 		if (SessionManager.isLogged(request)) {
 			throw new UnauthorizedException("Please log out before you can register!");
 		}
@@ -80,7 +80,7 @@ public class UserController {
 			UnauthorizedException {
 		
 		if (!SessionManager.isLogged(request)) {
-			UserValidation.validate(login);
+			UserValidator.validate(login);
 			User user = userService.findByEmail(login.getEmail());
 			if (user.getPassword().equals(Cryptography.cryptSHA256(login.getPassword()))) {
 				SessionManager.signInUser(request, user);

@@ -1,4 +1,4 @@
-package com.bacefook.model;
+package com.bacefook.entity;
 
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
@@ -13,12 +13,12 @@ import lombok.NonNull;
 @Data
 @Entity
 @NoArgsConstructor
-@Table(name = "cities")
-public class City {
+@Table(name = "genders")
+public class Gender {
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Integer id;
 	@NonNull
-	private String cityName;
+	private String genderName;
 }

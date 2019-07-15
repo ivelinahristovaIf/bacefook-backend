@@ -18,8 +18,8 @@ import com.bacefook.dto.UserInfoDTO;
 import com.bacefook.dto.UserSummaryDTO;
 import com.bacefook.exception.ElementNotFoundException;
 import com.bacefook.exception.InvalidUserCredentialsException;
-import com.bacefook.model.User;
-import com.bacefook.model.UserInfo;
+import com.bacefook.entity.User;
+import com.bacefook.entity.UserInfo;
 import com.bacefook.repository.GenderRepository;
 import com.bacefook.repository.UsersInfoRepository;
 import com.bacefook.repository.UsersRepository;
@@ -75,11 +75,11 @@ public class UserService {
 		}
 	}
 
-	public UserInfo save(UserInfoDTO userInfoDto, Integer userId) {
+	public UserInfo save(UserInfoDTO userInfoDto, Integer userId) throws ElementNotFoundException {
 		UserInfo info = new UserInfo();
 		this.mapper.map(userInfoDto, info);
 		info.setId(userId);
-		usersInfoRepo.save(info);
+		this.save(info);
 		return info;
 	}
 
@@ -120,7 +120,7 @@ public class UserService {
 		User user = new User();
 		this.mapper.map(signUp, user);
 		user.setPassword(Cryptography.cryptSHA256(signUp.getPassword()));
-		user.setGenderId(genderService.findByGenderName(signUp.getGender()).getId());
+		user.setGender(genderService.findByGenderName(signUp.getGender()));
 		usersRepo.save(user);
 		return user;
 	}

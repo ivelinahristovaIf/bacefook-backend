@@ -20,7 +20,7 @@ import com.bacefook.dto.CommentDTO;
 import com.bacefook.exception.AlreadyContainsException;
 import com.bacefook.exception.ElementNotFoundException;
 import com.bacefook.exception.UnauthorizedException;
-import com.bacefook.model.Comment;
+import com.bacefook.entity.Comment;
 import com.bacefook.service.CommentLikeService;
 import com.bacefook.service.CommentService;
 import com.bacefook.service.PostService;
@@ -43,21 +43,20 @@ public class CommentsController {
 	@PostMapping("/commentlikes")
 	public String addLikeToComment(@RequestParam("commentId") Integer commentId, HttpServletRequest request)
 			throws UnauthorizedException, ElementNotFoundException, AlreadyContainsException {
-		
-		int userId = SessionManager.getLoggedUser(request);
-		commentsService.findById(commentId);
-		commentLikeService.addLikeToComment(commentId, userId);
+		commentLikeService.addLikeToComment(request, commentId);
 		return "Comment " + commentId + " was liked";
 	}
 	@DeleteMapping("/commentlikes/unlike")
-	public String unlikeAComment(@RequestParam("commentId")Integer commentId,HttpServletRequest request) throws UnauthorizedException {
+	public String unlikeAComment(@RequestParam("commentId")Integer commentId,HttpServletRequest request) throws UnauthorizedException, ElementNotFoundException {
 		int userId = SessionManager.getLoggedUser(request);
-		int rows = commentLikeService.unlikeAComment(commentId, userId);
-		if(rows>0) {
-			return "Comment was unliked!";
-		}else {
-			return "Could not unlike comment.";
-		}
+	    commentLikeService.unlikeAComment(commentId, userId);
+		//TODO
+//		if(rows>0) {
+//			return "Comment was unliked!";
+//		}else {
+//			return "Could not unlike comment.";
+//		}
+		return "Comment was unliked!";
 	}
 
 	@PostMapping("/commentreply")
@@ -115,6 +114,7 @@ public class CommentsController {
 		List<Comment> comments = commentsService.findAllByPostId(postId);
 		List<CommentDTO> commentsOnPost = new ArrayList<>();
 
+		//TODO
 		for (Comment comment : comments) {
 			String posterFullName = userService.findById(comment.getPosterId()).getFullName();
 			CommentDTO commentDto = new CommentDTO();

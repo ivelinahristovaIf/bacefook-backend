@@ -13,7 +13,7 @@ import com.bacefook.dao.CommentDAO;
 import com.bacefook.dto.CommentContentDTO;
 import com.bacefook.dto.CommentDTO;
 import com.bacefook.exception.ElementNotFoundException;
-import com.bacefook.model.Comment;
+import com.bacefook.entity.Comment;
 import com.bacefook.repository.CommentsRepository;
 
 @Service
@@ -82,5 +82,7 @@ public class CommentService {
 		reply.setCommentedOnId(commentId);
 		commentsRepo.save(reply);
 	}
+
+
 
 }

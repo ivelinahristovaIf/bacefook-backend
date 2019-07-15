@@ -1,6 +1,6 @@
 package com.bacefook.utilityTests;
 
-import static com.bacefook.utility.UserValidation.validate;
+import static com.bacefook.utility.UserValidator.validate;
 
 import java.time.LocalDate;
 

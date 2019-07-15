@@ -14,8 +14,8 @@ import com.bacefook.dao.RelationsDAO;
 import com.bacefook.dao.UserDAO;
 import com.bacefook.dto.UserSummaryDTO;
 import com.bacefook.exception.ElementNotFoundException;
-import com.bacefook.model.Relation;
-import com.bacefook.model.User;
+import com.bacefook.entity.Relation;
+import com.bacefook.entity.User;
 import com.bacefook.repository.RelationsRepository;
 import com.bacefook.repository.UsersRepository;
 

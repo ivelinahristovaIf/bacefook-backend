@@ -4,7 +4,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 
 import com.bacefook.exception.UnauthorizedException;
-import com.bacefook.model.User;
+import com.bacefook.entity.User;
 
 public class SessionManager {
 	private static final String LOGGED_STATUS = "Logged";

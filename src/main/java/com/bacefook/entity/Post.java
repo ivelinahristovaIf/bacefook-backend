@@ -1,4 +1,4 @@
-package com.bacefook.model;
+package com.bacefook.entity;
 
 import java.time.LocalDateTime;
 
@@ -13,26 +13,23 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.NonNull;
-import lombok.RequiredArgsConstructor;
 
 @Data
 @Entity
 @NoArgsConstructor
-@RequiredArgsConstructor
 @AllArgsConstructor
-@Table(name = "comments")
-public class Comment {
+//@RequiredArgsConstructor
+@Table(name = "posts")
+public class Post {
+
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Integer id;
 	@NonNull
 	@Column(nullable = false)
 	private Integer posterId;
-	@NonNull
-	@Column(nullable = false)
-	private Integer postId;
 	@Column
-	private Integer commentedOnId;
+	private Integer sharesPostId;
 	@NonNull
 	@Column(nullable = false)
 	private String content;
@@ -40,4 +37,7 @@ public class Comment {
 	@Column(nullable = false)
 	private LocalDateTime postingTime;
 
+
+    public Post(Integer poster, String s, LocalDateTime now) {
+    }
 }

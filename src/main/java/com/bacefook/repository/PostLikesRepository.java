@@ -5,13 +5,13 @@ import java.util.List;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
-import com.bacefook.model.PostLike;
+import com.bacefook.entity.PostLike;
 
 @Repository
 public interface PostLikesRepository extends JpaRepository<PostLike, Integer> {
 	
-	public List<PostLike> findAllByPostId(Integer postId);
+	List<PostLike> findAllByPostId(Integer postId);
 	
-	public PostLike findByUserIdAndPostId(Integer userId,Integer postId);
+	PostLike findByUserIdAndPostId(Integer userId,Integer postId);
 	
 }

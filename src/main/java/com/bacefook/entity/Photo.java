@@ -1,4 +1,4 @@
-package com.bacefook.model;
+package com.bacefook.entity;
 
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;

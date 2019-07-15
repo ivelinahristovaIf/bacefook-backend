@@ -1,5 +1,6 @@
-package com.bacefook.model;
+package com.bacefook.entity;
 
+import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
@@ -13,16 +14,22 @@ import lombok.RequiredArgsConstructor;
 
 @Data
 @Entity
-@NoArgsConstructor
 @RequiredArgsConstructor
-@Table(name = "comment_likes")
-public class CommentLike {
+@NoArgsConstructor
+@Table(name = "relations")
+public class Relation {
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
+	@Column(name = "id")
 	private Integer id;
 	@NonNull
-	private Integer commentId;
+	@Column(name = "sender_id")
+	private Integer senderId;
 	@NonNull
-	private Integer userId;
+	@Column(name = "receiver_id")
+	private Integer receiverId;
+	@NonNull
+	@Column(name="is_confirmed")
+	private Integer isConfirmed;
 }

@@ -3,17 +3,19 @@ package com.bacefook.repository;
 import java.util.List;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
-import com.bacefook.model.Comment;
+import com.bacefook.entity.Comment;
 
 @Repository
 public interface CommentsRepository extends JpaRepository<Comment, Integer>{
 
-	public List<Comment> findAllByPostId(Integer posterId);
+	List<Comment> findAllByPostId(Integer posterId);
 	
-	public List<Comment> findAllByPosterId(Integer userId);
+	List<Comment> findAllByPosterId(Integer userId);
 	
-	public List<Comment> findAllByCommentedOnIdOrderByPostingTime(Integer commentedOnId);
+	List<Comment> findAllByCommentedOnIdOrderByPostingTime(Integer commentedOnId);
+
 	
 }

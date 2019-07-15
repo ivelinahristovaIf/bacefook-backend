@@ -1,13 +1,9 @@
-package com.bacefook.model;
+package com.bacefook.entity;
 
 import java.time.LocalDateTime;
+import java.util.Set;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
-import javax.persistence.Table;
+import javax.persistence.*;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -18,19 +14,22 @@ import lombok.RequiredArgsConstructor;
 @Data
 @Entity
 @NoArgsConstructor
-@AllArgsConstructor
 @RequiredArgsConstructor
-@Table(name = "posts")
-public class Post {
+@AllArgsConstructor
+@Table(name = "comments")
+public class Comment {
 
-	@Id
+    @Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Integer id;
 	@NonNull
 	@Column(nullable = false)
 	private Integer posterId;
+	@NonNull
+	@Column(nullable = false)
+	private Integer postId;
 	@Column
-	private Integer sharesPostId;
+	private Integer commentedOnId;
 	@NonNull
 	@Column(nullable = false)
 	private String content;
@@ -38,5 +37,11 @@ public class Post {
 	@Column(nullable = false)
 	private LocalDateTime postingTime;
 
-	
+    @ManyToMany(mappedBy = "users")
+	private Set<User> users = new HashSet<>();
+
+//	//Bidirectional mapping
+//	@OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
+//	private Set<CommentLike> commentsLikes;
+
 }

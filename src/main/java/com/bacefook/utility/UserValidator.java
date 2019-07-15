@@ -8,7 +8,7 @@ import com.bacefook.dto.LoginDTO;
 import com.bacefook.dto.SignUpDTO;
 import com.bacefook.exception.InvalidUserCredentialsException;
 
-public class UserValidation {
+public class UserValidator {
 
 	private static final int MIN_NAMES_LENGTH = 3;
 	private static final int MAX_NAMES_LENGTH = 30;
@@ -17,7 +17,7 @@ public class UserValidation {
 	private final static String EMAIL_PATTERN = "^[(a-zA-Z-0-9-\\_\\+\\.)]+@[(a-z-A-z)]+\\.[(a-zA-z)]{2,5}$";
 	private final static String PASSWORD_PATTERN = "^[a-zA-Z0-9]{8,30}$";
 
-	private UserValidation() {
+	private UserValidator() {
 		// this is to disable instances
 	}
 	

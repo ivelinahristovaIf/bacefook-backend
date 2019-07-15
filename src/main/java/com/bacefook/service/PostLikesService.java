@@ -13,8 +13,8 @@ import com.bacefook.dao.ProfilePhotoDAO;
 import com.bacefook.dao.UserDAO;
 import com.bacefook.dto.UserSummaryDTO;
 import com.bacefook.exception.AlreadyContainsException;
-import com.bacefook.model.PostLike;
-import com.bacefook.model.User;
+import com.bacefook.entity.PostLike;
+import com.bacefook.entity.User;
 import com.bacefook.repository.PostLikesRepository;
 import com.bacefook.repository.UsersRepository;
 

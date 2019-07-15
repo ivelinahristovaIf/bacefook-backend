@@ -4,7 +4,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.bacefook.exception.ElementNotFoundException;
-import com.bacefook.model.Gender;
+import com.bacefook.entity.Gender;
 import com.bacefook.repository.GenderRepository;
 
 @Service

@@ -13,7 +13,7 @@ import org.springframework.test.context.junit4.SpringRunner;
 import com.bacefook.dao.RelationsDAO;
 import com.bacefook.dao.UserDAO;
 import com.bacefook.exception.ElementNotFoundException;
-import com.bacefook.model.Relation;
+import com.bacefook.entity.Relation;
 import com.bacefook.repository.RelationsRepository;
 import com.bacefook.repository.UsersRepository;
 import com.bacefook.service.RelationService;

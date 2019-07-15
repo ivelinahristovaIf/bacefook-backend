@@ -4,6 +4,7 @@ import java.util.List;
 
 import javax.servlet.http.HttpServletRequest;
 
+import com.bacefook.exception.AlreadyContainsException;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -21,12 +22,10 @@ import com.bacefook.dto.PostContentDTO;
 import com.bacefook.dto.PostDTO;
 import com.bacefook.dto.ProfilePageDTO;
 import com.bacefook.dto.UserInfoDTO;
-import com.bacefook.exception.AlreadyContainsException;
 import com.bacefook.exception.ElementNotFoundException;
 import com.bacefook.exception.UnauthorizedException;
 import com.bacefook.entity.Post;
 import com.bacefook.entity.User;
-import com.bacefook.service.PostLikesService;
 import com.bacefook.service.PostService;
 import com.bacefook.service.RelationService;
 import com.bacefook.service.UserService;
@@ -38,8 +37,6 @@ public class PostsController {
 	@Autowired
 	private PostService postsService;
 	@Autowired
-	private PostLikesService postsLikeService;
-	@Autowired
 	private UserService userService;
 	@Autowired
 	private RelationService relationService;
@@ -50,7 +47,7 @@ public class PostsController {
 	 ***/
 	@GetMapping("/home")
 	public HomePageDTO homePage(HttpServletRequest request) throws UnauthorizedException, ElementNotFoundException {
-
+		//TODO refactor
 		Integer userId = SessionManager.getLoggedUser(request);
 		User loggedUser = userService.findById(userId);
 
@@ -65,8 +62,7 @@ public class PostsController {
 		user.setFriendsCount(relationService.findAllFriendOf(userId).size());
 		
 		List<PostDTO> posts = postsService.findAllPostsFromFriends(userId);
-		HomePageDTO home = new HomePageDTO(navUser, user, posts);
-		return home;
+		return new HomePageDTO(navUser, user, posts);
 	}
 
 	@GetMapping("/profile")
@@ -100,41 +96,35 @@ public class PostsController {
 	
 	@PostMapping("/postlikes")
 	public void likeAPost(@RequestParam("postId") Integer postId, HttpServletRequest request)
-			throws UnauthorizedException, AlreadyContainsException {
-		int userId = SessionManager.getLoggedUser(request);
-		postsLikeService.likePost(userId, postId);
+			throws UnauthorizedException, ElementNotFoundException {
+		postsService.addLikeToPost(postId, request);
 	}
+//
+//	@GetMapping("/postlikes")
+//	public List<UserSummaryDTO> getAllUsersWhoLikedPost(@RequestParam("postId") Integer postId) {
+//		return postsLikeService.findAllUsersWhoLikedAPost(postId);
+//	}
+//
+//	@GetMapping("/postlikes-size")
+//	public Integer getLikesCountOnPost(@RequestParam("postId") Integer postId) {
+//		return postsLikeService.findAllUsersWhoLikedAPost(postId).size();
+//	}
+//
+//	@DeleteMapping("/postlikes/unlike")
+//	public String unlikeAComment(@RequestParam("postId")Integer postId,HttpServletRequest request) throws UnauthorizedException {
+//		int userId = SessionManager.getLoggedUser(request);
+//		int rows = postsLikeService.unlikeAPost(postId, userId);
+//		if(rows>0) {
+//			return "Post was unliked!";
+//		}else {
+//			return "Could not unlike post.";
+//		}
+//	}
 	
-	@GetMapping("/postlikes")
-	public List<UserSummaryDTO> getAllUsersWhoLikedPost(@RequestParam("postId") Integer postId) {
-		return postsLikeService.findAllUsersWhoLikedAPost(postId);
-	}
-	
-	@GetMapping("/postlikes-size")
-	public Integer getLikesCountOnPost(@RequestParam("postId") Integer postId) {
-		return postsLikeService.findAllUsersWhoLikedAPost(postId).size();
-	}
-
-	@DeleteMapping("/postlikes/unlike")
-	public String unlikeAComment(@RequestParam("postId")Integer postId,HttpServletRequest request) throws UnauthorizedException {
-		int userId = SessionManager.getLoggedUser(request);
-		int rows = postsLikeService.unlikeAPost(postId, userId);
-		if(rows>0) {
-			return "Post was unliked!";
-		}else {
-			return "Could not unlike post.";
-		}
-	}
-	
-	@PostMapping("/posts")
+	@PostMapping("/posts")//DONE
 	public Integer createPost(@RequestBody PostContentDTO contentDto, HttpServletRequest request)
 			throws UnauthorizedException, ElementNotFoundException {
-		int posterId = SessionManager.getLoggedUser(request);
-		String content = contentDto.getContent();
-		if (content == null || content.isEmpty()) {
-			throw new ElementNotFoundException("Write something before posting!");
-		}
-		return postsService.save(posterId, content);
+		return postsService.save(request, contentDto);
 	}
 	
 	@PostMapping("/postshares")
@@ -174,7 +164,7 @@ public class PostsController {
 		}
 		Integer userId = SessionManager.getLoggedUser(request);
 		Post post = postsService.findById(postId);
-		if (!post.getPosterId().equals(userId)) {
+		if (!post.getPoster().getId().equals(userId)) {
 			throw new UnauthorizedException("Cannot update someone else's post!");
 		}
 		post.setContent(content.getContent());

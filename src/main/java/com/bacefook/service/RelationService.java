@@ -14,7 +14,7 @@ import com.bacefook.dao.RelationsDAO;
 import com.bacefook.dao.UserDAO;
 import com.bacefook.dto.UserSummaryDTO;
 import com.bacefook.exception.ElementNotFoundException;
-import com.bacefook.entity.Relation;
+import com.bacefook.entity.Request;
 import com.bacefook.entity.User;
 import com.bacefook.repository.RelationsRepository;
 import com.bacefook.repository.UsersRepository;
@@ -46,7 +46,7 @@ public class RelationService {
 	public Integer sendFriendRequest(Integer senderId, Integer receiverId)
 			throws RelationException, ElementNotFoundException {
 
-		Relation friendRequest = new Relation(senderId, receiverId, 0);
+		Request friendRequest = new Request(userService.findById(senderId), userService.findById(receiverId), 0);
 		if (senderId.equals(receiverId)) {
 			throw new RelationException("You cannot send a request to yourself!");
 		}
@@ -63,7 +63,7 @@ public class RelationService {
 	}
 
 	public Integer confirmFriendRequest(Integer receiverId, Integer senderId) throws RelationException {
-		Relation relation = relationsRepo.findBySenderIdAndReceiverId(senderId, receiverId);
+		Request relation = relationsRepo.findBySenderIdAndReceiverId(senderId, receiverId);
 		if (relation == null) {
 			throw new RelationException("You do not have a request from that user!");
 		}
@@ -95,11 +95,11 @@ public class RelationService {
 	/**
 	 * find all friends by user
 	 * 
-	 * @throws ElementNotFoundException
+	 * throws ElementNotFoundException
 	 **/
 	public List<UserSummaryDTO> findAllFriendOf(Integer userId) {
 		List<Integer> friendsIds = userDAO.findAllFriendsOf(userId);
-		List<UserSummaryDTO> users = new LinkedList<UserSummaryDTO>();
+		List<UserSummaryDTO> users = new LinkedList<>();
 		for (Integer id : friendsIds) {
 			Optional<User> user = usersRepo.findById(id);
 			if (user.isPresent()) {

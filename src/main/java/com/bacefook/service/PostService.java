@@ -1,11 +1,10 @@
 package com.bacefook.service;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
+import com.bacefook.controller.SessionManager;
+import com.bacefook.exception.UnauthorizedException;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -19,6 +18,8 @@ import com.bacefook.entity.User;
 import com.bacefook.repository.PostsRepository;
 import com.bacefook.repository.UsersRepository;
 
+import javax.servlet.http.HttpServletRequest;
+
 @Service
 public class PostService {
 
@@ -27,11 +28,21 @@ public class PostService {
 	@Autowired
 	private PostDAO postDao;
 	@Autowired
-	private UsersRepository usersRepo;
-	ModelMapper mapper = new ModelMapper();
+	private UsersRepository usersRepo;//TODO user service
 
-	public Integer save(Integer posterId, String content) {
-		Post post = new Post(posterId, content, LocalDateTime.now());
+	@Autowired
+	private UserService userService;
+
+	private ModelMapper mapper = new ModelMapper();
+
+	public Integer save(HttpServletRequest request, PostContentDTO contentDto) throws UnauthorizedException, ElementNotFoundException {
+		int posterId = SessionManager.getLoggedUser(request);
+		String content = contentDto.getContent();
+		if (content == null || content.isEmpty()) {
+			throw new ElementNotFoundException("Write something before posting!");
+		}
+		User poster = userService.findById(posterId);
+		Post post = new Post(poster, content, LocalDateTime.now());
 		return postsRepo.save(post).getId();
 	}
 
@@ -49,13 +60,13 @@ public class PostService {
 		if (!existsById(sharesPostId)) {
 			throw new ElementNotFoundException("Cannot share a post that does not exist!");
 		}
-		
-		Post post = new Post(posterId, postContentDto.getContent(), LocalDateTime.now());
-		post.setSharesPostId(sharesPostId);
+		User poster = userService.findById(posterId);
+		Post post = new Post(poster, postContentDto.getContent(), LocalDateTime.now());
+		post.setSharesPost(postsRepo.getOne(sharesPostId));
 		return postsRepo.save(post).getId();
 	}
 
-	public boolean existsById(Integer sharesPostId) {
+	private boolean existsById(Integer sharesPostId) {
 		return postsRepo.existsById(sharesPostId);
 	}
 
@@ -64,7 +75,7 @@ public class PostService {
 	 **/
 	public List<PostDTO> findAllPostsFromFriends(Integer loggerId) {
 		List<Integer> postIds = postDao.getAllPostsIdByFriends(loggerId);
-		List<PostDTO> posts = new ArrayList<PostDTO>(postIds.size());
+		List<PostDTO> posts = new ArrayList<>(postIds.size());
 	
 		for (Integer id : postIds) {
 			Optional<Post> optional = postsRepo.findById(id);
@@ -73,7 +84,7 @@ public class PostService {
 				Post post = optional.get();
 				PostDTO dto = new PostDTO();
 				this.mapper.map(post, dto);
-				Optional<User> u = usersRepo.findById(post.getPosterId());
+				Optional<User> u = usersRepo.findById(post.getPoster().getId());
 				
 				if (u.isPresent()) {
 					User user = u.get();
@@ -95,7 +106,7 @@ public class PostService {
 		return this.postsConverter(posts, posterId);
 	}
 
-	public List<PostDTO> postsConverter(List<Post> posts, Integer posterId) throws ElementNotFoundException {
+	private List<PostDTO> postsConverter(List<Post> posts, Integer posterId) throws ElementNotFoundException {
 		List<PostDTO> dtos = new LinkedList<>();
 		
 		for (Post post : posts) {
@@ -122,7 +133,6 @@ public class PostService {
 
 	public Post findById(Integer postId) throws ElementNotFoundException {
 			Optional<Post> post = postsRepo.findById(postId);
-
 			if(!post.isPresent()) {
 				throw new ElementNotFoundException("No such post!");
 			}
@@ -136,7 +146,7 @@ public class PostService {
 		for (Post post : posts) {
 			PostDTO dto = new PostDTO();
 			this.mapper.map(post, dto);
-			Optional<User> optional = usersRepo.findById(post.getPosterId());
+			Optional<User> optional = usersRepo.findById(post.getPoster().getId());
 		
 			if (optional.isPresent()) {
 				String posterFullName = optional.get().getFullName();
@@ -146,4 +156,52 @@ public class PostService {
 		}
 		return dtos;
 	}
+
+	/**
+	 * add row to post_likes table
+	 * throws AlreadyContainsException
+	 **/
+	public void addLikeToPost(int id, HttpServletRequest request) throws UnauthorizedException, ElementNotFoundException {
+		//TODO check if already liked
+		//get post
+		Post post = postsRepo.getOne(id);
+		int userId = SessionManager.getLoggedUser(request);
+		User user = userService.findById(userId);
+		user.getLikedPosts().add(post);
+		postsRepo.saveAndFlush(post); //post is read later before commit
+		Set<User> likers = post.getLikers();
+		likers.add(user);
+		usersRepo.save(user);
+	}
+//	public void likePost(Integer userId, Integer postId) throws AlreadyContainsException {
+//		PostLike like = postLikesRepo.findByUserIdAndPostId(userId, postId);
+//		if(like!=null) {
+//			throw new AlreadyContainsException("You have already liked this post!");
+//		}
+//		postLikesRepo.register(new PostLike(userId, postId));
+//	}
+//	public int unlikeAPost(Integer postId, Integer userId) {
+//		return postDao.unlikePost(postId, userId);
+//	}
+//
+	/**
+	 * get all user who liked post with id, firstName, lastName, friendsCount and
+	 * profilePhotoUrl
+	 **/
+//	public List<UserSummaryDTO> findAllUsersWhoLikedAPost(Integer postId) {
+//		List<PostLike> postLikes = postLikesRepo.findAllByPostId(postId);
+//		List<UserSummaryDTO> dtos = new ArrayList<>();
+//		for (PostLike like : postLikes) {
+//			Optional<User> optionalUser = usersRepo.findById(like.getUserId());
+//			if (optionalUser.isPresent()) {
+//				UserSummaryDTO dto = new UserSummaryDTO();
+//				this.mapper.map(optionalUser.get(), dto);
+//				dto.setProfilePhotoUrl(profilePhotoDao.findProfilePhotoUrl(optionalUser.get().getId()).get(0));
+//				dto.setFriendsCount(userDao.findAllFriendsOf(optionalUser.get().getId()).size());
+//				dtos.add(dto);
+//			}
+//		}
+//		return dtos;
+//	}
+
 }

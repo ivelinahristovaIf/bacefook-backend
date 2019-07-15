@@ -9,23 +9,22 @@ import lombok.RequiredArgsConstructor;
 
 @Data
 @Entity
-@NoArgsConstructor
 @RequiredArgsConstructor
-@Table(name = "photos")
-public class Photo {
-	
+@NoArgsConstructor
+@Table(name = "requests")
+public class Request {
+
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Integer id;
 	@NonNull
-	@OneToOne
-	@MapsId
-	private Post post;
+//	@Column(name = "sender_id")
+	@ManyToOne
+	private User sender;
 	@NonNull
-	private String url;
-
-	@OneToOne(mappedBy = "profilePhoto")
-	private UserInfo profilePhotoOF;
-	@OneToOne(mappedBy = "coverPhoto")
-	private UserInfo coverPhotoOF;
+//	@Column(name = "receiver_id")
+	@ManyToOne
+	private User receiver;
+	@NonNull
+	private Integer isConfirmed;
 }

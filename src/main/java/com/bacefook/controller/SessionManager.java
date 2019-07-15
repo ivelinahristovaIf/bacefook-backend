@@ -30,12 +30,12 @@ public class SessionManager {
 		Integer userId = (Integer) session.getAttribute(LOGGED_STATUS);
 //		session.setAttribute(LOGGED_STATUS, null);
 		session.invalidate();
-		return "User " + userId.intValue() + " was logged out!";
+		return "User " + userId+ " was logged out!";
 	}
 
 	/**
-	 * @return Logged user's ID, or null if no user is logged in
-	 * @throws UnauthorizedException
+	 * return Logged user's ID, or null if no user is logged in
+	 * throws UnauthorizedException
 	 */
 	public static Integer getLoggedUser(HttpServletRequest request) throws UnauthorizedException {
 		HttpSession session = request.getSession();

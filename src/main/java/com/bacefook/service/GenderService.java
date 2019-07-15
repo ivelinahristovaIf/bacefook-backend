@@ -14,7 +14,7 @@ public class GenderService {
 	private GenderRepository genderRepo;
 	
 	public String findById(Integer id) throws ElementNotFoundException {
-		Gender gender = genderRepo.findById(id).get();
+		Gender gender = genderRepo.getOne(id);
 		if (gender == null) {
 			throw new ElementNotFoundException("A gender with that id does not exist!");
 		}

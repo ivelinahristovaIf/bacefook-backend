@@ -27,91 +27,54 @@ import com.bacefook.exception.UnauthorizedException;
 import com.bacefook.entity.User;
 import com.bacefook.security.Cryptography;
 import com.bacefook.service.UserService;
-import com.bacefook.utility.UserValidator;
+import com.bacefook.utility.UserValidation;
 
 //@CrossOrigin(origins = "http://bacefook.herokuapp.com")
 @RestController
 public class UserController {
 
-	@Autowired
-	private UserService userService;
+    @Autowired
+    private UserService userService;
 
-	@GetMapping("/")
-	public void startingPage(HttpServletResponse response) throws IOException {
-		response.sendRedirect("https://documenter.getpostman.com/view/6800789/S11RKak4");
-	}
+    @GetMapping("/")
+    public void startingPage(HttpServletResponse response) throws IOException {
+        response.sendRedirect("https://documenter.getpostman.com/view/6800789/S11RKak4");
+    }
 
-	@GetMapping("/users/search")
-	public List<UserSummaryDTO> getAllUsersBySearch(@RequestParam String input,HttpServletRequest request) throws UnauthorizedException {
-		Integer userId = SessionManager.getLoggedUser(request);
-		List<UserSummaryDTO> users = userService.searchByNameOrderedAndLimited(input, userId);
-		return users;
-	}
+    @GetMapping("/users/search")//DONE
+    public List<UserSummaryDTO> getAllUsersBySearch(@RequestParam String input, HttpServletRequest request) throws UnauthorizedException {
+        return userService.searchByNameOrderedAndLimited(input, request);
+    }
 
-	@PostMapping("/users/changepassword")
-	public String changeUserPassword(@RequestBody ChangePasswordDTO passDto, HttpServletRequest request)
-			throws InvalidUserCredentialsException, NoSuchAlgorithmException, UnauthorizedException,
-			ElementNotFoundException {
-		UserValidator.validate(passDto);
-		int userId = SessionManager.getLoggedUser(request);
-		return userService.changePassword(userId, passDto.getOldPassword(), passDto.getNewPassword());
-	}
+    @PostMapping("/users/changepassword")//DONE
+    public String changeUserPassword(@RequestBody ChangePasswordDTO passDto, HttpServletRequest request)
+            throws InvalidUserCredentialsException, NoSuchAlgorithmException, UnauthorizedException,
+            ElementNotFoundException {
+        return userService.changePassword(passDto, request);//TODO response entity
+    }
 
-	@PostMapping("/users/signup")
-	public Integer signUp(@RequestBody SignUpDTO signUp, HttpServletRequest request, HttpServletResponse response)
-			throws InvalidUserCredentialsException, ElementNotFoundException, NoSuchAlgorithmException,
-			UnauthorizedException, IOException {
-		UserValidator.validate(signUp);
-		if (SessionManager.isLogged(request)) {
-			throw new UnauthorizedException("Please log out before you can register!");
-		}
+    @PostMapping("/users/signup") //DONE
+    public Integer signUp(@RequestBody SignUpDTO signUp, HttpServletRequest request, HttpServletResponse response)
+            throws InvalidUserCredentialsException, ElementNotFoundException, NoSuchAlgorithmException,
+            UnauthorizedException {
+        return userService.register(signUp, request).getId();
+        //TODO response entity
+    }
 
-		if (userService.emailIsTaken(signUp.getEmail())) {
-			throw new InvalidUserCredentialsException("That email is already taken!");
-		}
-		User user = userService.save(signUp);
-		SessionManager.signInUser(request, user);
-		return user.getId();
-	}
+    @PostMapping("/users/login") //DONE
+    public Integer login(@RequestBody LoginDTO login, HttpServletRequest request)
+            throws InvalidUserCredentialsException, NoSuchAlgorithmException, ElementNotFoundException,
+            UnauthorizedException {
+        return userService.login(login, request);//TODO response entity
+    }
 
-	@PostMapping("/users/login")
-	public Integer login(@RequestBody LoginDTO login, HttpServletRequest request)
-			throws InvalidUserCredentialsException, NoSuchAlgorithmException, ElementNotFoundException,
-			UnauthorizedException {
-		
-		if (!SessionManager.isLogged(request)) {
-			UserValidator.validate(login);
-			User user = userService.findByEmail(login.getEmail());
-			if (user.getPassword().equals(Cryptography.cryptSHA256(login.getPassword()))) {
-				SessionManager.signInUser(request, user);
-				return user.getId();
-			} 
-			else {
-				throw new InvalidUserCredentialsException("Wrong login credentials!");
-			}
-		} 
-		else {
-			throw new UnauthorizedException("Log out first before you log in!");
-		}
-	}
+    @PostMapping("/users/logout")//DONE
+    public String logout(HttpServletRequest request) throws UnauthorizedException {
+        return userService.logout(request);
+    }
 
-	@PostMapping("/users/logout")
-	public String logout(HttpServletRequest request) throws UnauthorizedException {
-		if (SessionManager.isLogged(request)) {
-			String message = SessionManager.logOutUser(request);
-			return message;
-		} 
-		else {
-			throw new UnauthorizedException("You are not logged in!");
-		}
-	}
-	
-	@PostMapping("/users/setup")
-	public Integer setUpProfile(@RequestBody UserInfoDTO infoDto,HttpServletRequest request) throws  ElementNotFoundException, AlreadyContainsException, InvalidUserCredentialsException, UnauthorizedException {
-		int userId = SessionManager.getLoggedUser(request);
-		if(userService.getInfoByPhone(infoDto.getPhone())!=null) {
-			throw new AlreadyContainsException("A user with that phone already exists");
-		}
-		return userService.save(infoDto,userId).getId();
-	}
+    @PostMapping("/users/setup")
+    public Integer setUpProfile(@RequestBody UserInfoDTO infoDto, HttpServletRequest request) throws ElementNotFoundException, AlreadyContainsException, InvalidUserCredentialsException, UnauthorizedException {
+        return userService.setUpProfile(infoDto, request).getId();
+    }
 }

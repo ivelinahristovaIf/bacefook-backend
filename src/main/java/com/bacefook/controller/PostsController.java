@@ -4,7 +4,6 @@ import java.util.List;
 
 import javax.servlet.http.HttpServletRequest;
 
-import com.bacefook.exception.AlreadyContainsException;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -164,7 +163,7 @@ public class PostsController {
 		}
 		Integer userId = SessionManager.getLoggedUser(request);
 		Post post = postsService.findById(postId);
-		if (!post.getPoster().getId().equals(userId)) {
+		if (!post.getPosterId().equals(userId)) {
 			throw new UnauthorizedException("Cannot update someone else's post!");
 		}
 		post.setContent(content.getContent());

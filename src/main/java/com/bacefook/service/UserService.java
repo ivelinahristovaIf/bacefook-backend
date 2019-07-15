@@ -12,7 +12,7 @@ import com.bacefook.dto.*;
 import com.bacefook.entity.Gender;
 import com.bacefook.exception.AlreadyContainsException;
 import com.bacefook.exception.UnauthorizedException;
-import com.bacefook.utility.UserValidation;
+import com.bacefook.utility.UserValidator;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -51,7 +51,7 @@ public class UserService {
     public String findProfilePhotoUrl(Integer userId) throws ElementNotFoundException {
         User user = this.findById(userId);
 
-        String url = user.getUserInfo().getProfilePhoto().getUrl();
+        String url = user.getUserInfo().getProfilePhotoId();
         if (url.isEmpty()) {
             throw new ElementNotFoundException("No profile picture for this user!");
         }
@@ -94,7 +94,7 @@ public class UserService {
 
     public String changePassword(ChangePasswordDTO passDto, HttpServletRequest request)
             throws ElementNotFoundException, NoSuchAlgorithmException, InvalidUserCredentialsException, UnauthorizedException {
-        UserValidation.validate(passDto);
+        UserValidator.validate(passDto);
         int userId = SessionManager.getLoggedUser(request);
         User user = findById(userId);
         String oldPass = Cryptography.cryptSHA256(passDto.getOldPassword());
@@ -110,7 +110,7 @@ public class UserService {
 
     public Integer login(LoginDTO login, HttpServletRequest request) throws InvalidUserCredentialsException, ElementNotFoundException, NoSuchAlgorithmException, UnauthorizedException {
         if (!SessionManager.isLogged(request)) {
-            UserValidation.validate(login);
+            UserValidator.validate(login);
             String email = login.getEmail();
             User user = usersRepo.findByEmail(email);
             if (user == null) {
@@ -128,7 +128,7 @@ public class UserService {
     }
 
     public User register(SignUpDTO signUp, HttpServletRequest request) throws NoSuchAlgorithmException, InvalidUserCredentialsException, UnauthorizedException {
-        UserValidation.validate(signUp);
+        UserValidator.validate(signUp);
         if (SessionManager.isLogged(request)) {
             throw new UnauthorizedException("Please log out before you can register!");
         }
@@ -159,12 +159,12 @@ public class UserService {
         if (!user.isPresent()) {
             throw new ElementNotFoundException("No such user! Register before you can setup your profile.");
         }
-        if (info.getProfilePhoto().getId() != null
-                && !photoService.getIfUserHasPhotoById(info.getId(), info.getProfilePhoto().getId())) {
+        if (info.getProfilePhotoId() != null
+                && !photoService.getIfUserHasPhotoById(info.getId(), info.getProfilePhotoId())) {
             throw new ElementNotFoundException("You are not the owner of this photo!");
         }
-        if (info.getCoverPhoto().getId() != null
-                && !photoService.getIfUserHasPhotoById(info.getId(), info.getCoverPhoto().getId())) {
+        if (info.getCoverPhotoId() != null
+                && !photoService.getIfUserHasPhotoById(info.getId(), info.getCoverPhotoId())) {
             throw new ElementNotFoundException("You are not the owner of this photo!");
         }
         return usersInfoRepo.save(info);

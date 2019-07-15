@@ -24,12 +24,8 @@ import com.bacefook.exception.AlreadyContainsException;
 import com.bacefook.exception.ElementNotFoundException;
 import com.bacefook.exception.InvalidUserCredentialsException;
 import com.bacefook.exception.UnauthorizedException;
-import com.bacefook.entity.User;
-import com.bacefook.security.Cryptography;
 import com.bacefook.service.UserService;
-import com.bacefook.utility.UserValidation;
 
-//@CrossOrigin(origins = "http://bacefook.herokuapp.com")
 @RestController
 public class UserController {
 
@@ -55,7 +51,7 @@ public class UserController {
 
     @PostMapping("/users/signup") //DONE
     public Integer signUp(@RequestBody SignUpDTO signUp, HttpServletRequest request, HttpServletResponse response)
-            throws InvalidUserCredentialsException, ElementNotFoundException, NoSuchAlgorithmException,
+            throws InvalidUserCredentialsException, NoSuchAlgorithmException,
             UnauthorizedException {
         return userService.register(signUp, request).getId();
         //TODO response entity

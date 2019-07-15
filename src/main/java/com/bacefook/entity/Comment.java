@@ -1,6 +1,7 @@
 package com.bacefook.entity;
 
 import java.time.LocalDateTime;
+import java.util.HashSet;
 import java.util.Set;
 
 import javax.persistence.*;
@@ -37,8 +38,8 @@ public class Comment {
 	@Column(nullable = false)
 	private LocalDateTime postingTime;
 
-    @ManyToMany(mappedBy = "users")
-	private Set<User> users = new HashSet<>();
+	@ManyToMany(mappedBy = "users")
+	private Set<User> users = new HashSet<>();
 
 //	//Bidirectional mapping
 //	@OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
